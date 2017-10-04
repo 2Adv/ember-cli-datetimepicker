@@ -1,0 +1,1 @@
+export { default } from 'ember-cli-datetimepicker/components/date-time-picker';
