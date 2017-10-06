@@ -8,6 +8,10 @@ const mergeTrees = require('broccoli-merge-trees');
 module.exports = {
   name: 'ember-cli-datetimepicker',
 
+  isDevelopingAddon() {
+    return false;
+  },
+
   treeForVendor(tree) {
     let pathInNodeModules = path.resolve(path.dirname(require.resolve('jquery-datetimepicker')), '..');
 

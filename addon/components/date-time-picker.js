@@ -1,53 +1,17 @@
 import Ember from 'ember';
 import moment from 'moment';
 
-const {
-  Component,
-  get,
-  on,
-  observer,
-  computed,
-  run,
-  run: { scheduleOnce },
-  $: { proxy },
-  copy
-} = Ember;
+const { Component, get, on, observer,computed,run,run: { scheduleOnce },$: { proxy }, copy} = Ember;
 
 function formatDate(date) {
   return moment(date).format('YYYY/MM/DD H:mm');
 }
 
-const MyComponent = Component.extend({
+
+export default Component.extend({
   tagName: 'input',
   classNames: ['date-time-picker'],
-
-  _changeHandler(event) {
-    run(() => {
-      let newValue = Ember.$(event.target).val(),
-          oldValue = get(this, 'datetime'),
-          newDatetime, newDatetimeFormat, oldDatetimeFormat;
-      if (newValue) {
-        newDatetime = new Date(newValue);
-        newDatetimeFormat = formatDate(newDatetime);
-      }
-      if (oldValue) {
-        oldDatetimeFormat = formatDate(oldValue);
-      }
-
-      if (newDatetimeFormat === oldDatetimeFormat) {
-        return;
-      }
-
-      this.sendAction('action', newDatetime);
-    });
-  },
-  _changeHandlerProxy: computed(function() {
-    return proxy(this._changeHandler, this);
-  }),
-
-  _datetimeChanged: observer('datetime', function() {
-    this._updateValue(true);
-  }),
+  datetime:undefined,
 
   _updateValue(shouldForceUpdatePicker) {
     let value, datetime = get(this, 'datetime');
@@ -66,33 +30,26 @@ const MyComponent = Component.extend({
     }
   },
 
-  setUp: on('didInsertElement', function() {
-    let changeHandler = get(this, '_changeHandlerProxy');
+  setupPicker() {
     let options = get(this, 'options') || {};
-
-    // https://github.com/emberjs/ember.js/issues/14655
     options = copy(options);
+    scheduleOnce('afterRender', () => { this.$().datetimepicker(options)});
+  },
 
+  didInsertElement() {
+    this._super(...arguments);
     this._updateValue();
+    this.setupPicker()
+  },
 
-    scheduleOnce('afterRender', () => {
-      this.$()
-        .datetimepicker(options)
-        .on('change', changeHandler);
-    });
-  }),
+  didUpdateAttrs() {
+    this._super(...arguments);
+    this._updateValue(true);
+    this.setupPicker()
+  },
 
-  tearDown: on('willDestroyElement', function() {
-    let changeHandler = get(this, '_changeHandlerProxy');
+  willDestroyElement() {
+    this.$().datetimepicker('destroy');
+  }
 
-    this.$()
-      .off('change', changeHandler)
-      .datetimepicker('destroy');
-  })
 });
-
-MyComponent.reopenClass({
-  positionalParams: ['datetime']
-});
-
-export default MyComponent;
